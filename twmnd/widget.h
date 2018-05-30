@@ -82,6 +82,8 @@ private:
       * \brief Get the final width of the slide after everything is set.
       */
     int                     computeWidth();
+    int                     getXOffset();
+    int                     getYOffset();
 
     void                    setupFont();
 
@@ -137,6 +139,8 @@ private:
     QStack<Message>         m_previousStack;
     QPoint                  tmpBouncePos;
     int                     m_computedWidth;
+    int                     m_xoffset;
+    int                     m_yoffset;
 
     std::string             m_activePositionSlot;
 };

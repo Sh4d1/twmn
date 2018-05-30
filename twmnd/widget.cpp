@@ -165,6 +165,7 @@ void Widget::updateTopLeftAnimation(QVariant value)
     QPoint p(0, 0);
     if (m_settings.has("gui/screen") && !m_settings.get("gui/screen").toString().isEmpty()) {
         p = QDesktopWidget().screenGeometry(m_settings.get("gui/screen").toInt()).topLeft();
+        --p.rx();
     } else if (m_settings.has("gui/absolute_position") && !m_settings.get("gui/absolute_position").toString().isEmpty()) {
         QPoint tmp = stringToPos(m_settings.get("gui/absolute_position").toString());
         if (!tmp.isNull())
@@ -174,9 +175,16 @@ void Widget::updateTopLeftAnimation(QVariant value)
     int width = computeWidth();
     if (width != -1)
         m_computedWidth = width;
-    int offset_x = m_settings.get("gui/offset_x").toInt();
-    int offset_y = m_settings.get("gui/offset_y").toInt();
-    setGeometry(value.toInt()-m_computedWidth+offset_x, p.y()+offset_y, m_computedWidth, finalHeight);
+
+    int offset_x = getXOffset();
+    int offset_y = getYOffset();
+    
+    if (!m_messageQueue.isEmpty()) {
+        m_xoffset = offset_x;
+        m_yoffset = offset_y;
+    }
+        
+    setGeometry(p.x()+m_xoffset, p.y()+m_yoffset, value.toInt(), finalHeight);
     layout()->setSpacing(0);
     show();
 }
@@ -196,9 +204,14 @@ void Widget::updateTopRightAnimation(QVariant value)
           p = tmp;
         }
     }
-    int offset_x = m_settings.get("gui/offset_x").toInt();
-    int offset_y = m_settings.get("gui/offset_y").toInt();
-    setGeometry(p.x()-val+offset_x, p.y()+offset_y, val, finalHeight);
+    int offset_x = getXOffset();
+    int offset_y = getYOffset();
+    
+    if (!m_messageQueue.isEmpty()) {
+        m_xoffset = offset_x;
+        m_yoffset = offset_y;
+    }
+    setGeometry(p.x()-val+m_xoffset, p.y()+m_yoffset, val, finalHeight);
     layout()->setSpacing(0);
     show();
 }
@@ -480,6 +493,26 @@ void Widget::reverseStart()
     } else {
         autoNext();
     }
+}
+
+int Widget::getXOffset()
+{
+    if (m_messageQueue.isEmpty())
+        return m_settings.get("gui/offset_x").toInt();
+    Message& m = m_messageQueue.front();
+    if (m.data["xoff"])
+        return m.data["xoff"]->toInt();
+    return m_settings.get("gui/offset_x").toInt();
+}
+
+int Widget::getYOffset()
+{
+    if (m_messageQueue.isEmpty())
+        return m_settings.get("gui/offset_y").toInt();
+    Message& m = m_messageQueue.front();
+    if (m.data["yoff"])
+        return m.data["yoff"]->toInt();
+    return m_settings.get("gui/offset_y").toInt();
 }
 
 int Widget::computeWidth()
